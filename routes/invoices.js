@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const ExpressError = require('../expressError');
 
+// Works
 router.get("/", async (req, res, next)=> {
     try {
         const results = await db.query(
@@ -18,11 +19,11 @@ router.get("/", async (req, res, next)=> {
     }         
 });
 
-// ??? Something is not working with the FULL JOIN, cannot get description from companies table 
+// Works
 router.get("/:id", async (req,res, next)=> {
     try {
         const results = await db.query(
-            `SELECT i.id, i.comp_code, i.amt, i.paid, i.add_date, i.paid_date 
+            `SELECT i.id, i.comp_code, i.amt, i.paid, i.add_date, i.paid_date, c.description 
             FROM invoices AS i
             FULL JOIN companies as c
             ON i.comp_code = c.code
@@ -38,15 +39,15 @@ router.get("/:id", async (req,res, next)=> {
 });
 
 
-// ??? ID is not defined, whether or not I put ID in request on INSOMNIA, but want comp_code and amt to be all I need 
+// Works
 router.post("/", async (req, res, next)=>{
     try {
         const { comp_code, amt } = req.body;
         const results = await db.query(`
-        INSERT INTO invoices (id, comp_code, amt, paid, add_date, paid_date)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO invoices (comp_code, amt)
+        VALUES ($1, $2)
         RETURNING id, comp_code, amt, paid, add_date, paid_date`,
-        [id, comp_code, amt, paid, add_date, paid_date]);
+        [comp_code, amt]);
     return res.status(201).json(results.rows[0]);
     }
     catch(e) {
@@ -73,15 +74,13 @@ router.put("/:id", async (req, res, next) => {
     }
 })
 
-// ??? This deletes, but gives me the message not found 
+// Works
 router.delete("/:id", async (req, res, next)=>{
     try {
         const results = await db.query(`
         DELETE FROM invoices WHERE id = $1
         `, [req.params.id]);
-        if (results.rows.length === 0) {
-            throw new ExpressError("Message not found", 404)
-        }
+    
     return res.json({message: 'Deleted'});
 
     } catch(e){
